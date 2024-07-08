@@ -60,7 +60,7 @@ func (c *TreeCanvas) Layout(gtx layout.Context, i input.Source, tree *ProcessedT
 	}
 
 	op.Offset(image.Pt(int(c.offsetX), int(c.offsetY))).Add(gtx.Ops)
-	switch 5 {
+	switch 6 {
 	case 0:
 		op.Affine(f32.Affine2D{}.Scale(f32.Pt(0, 0), f32.Pt(c.scale, c.scale))).Add(gtx.Ops)
 		for _, node := range tree.Nodes {
@@ -109,6 +109,21 @@ func (c *TreeCanvas) Layout(gtx layout.Context, i input.Source, tree *ProcessedT
 			addSquashCircle(&path, node.Position.Mul(c.scale), 20*c.scale)
 		}
 		paint.FillShape(gtx.Ops, color.NRGBA{R: 0xff, A: 0xff}, clip.Outline{Path: path.End()}.Op())
+	case 6:
+		op.Affine(f32.Affine2D{}.Scale(f32.Pt(0, 0), f32.Pt(c.scale, c.scale))).Add(gtx.Ops)
+
+		rec := op.Record(gtx.Ops)
+		drawEllipse(gtx, f32.Point{}, 20, color.NRGBA{R: 0xff, A: 0xff})
+		nodeDraw := rec.Stop()
+
+		for _, node := range tree.Nodes {
+			if node.IsProxy {
+				continue
+			}
+			stack := op.Offset(node.Position.Round()).Push(gtx.Ops)
+			nodeDraw.Add(gtx.Ops)
+			stack.Pop()
+		}
 	}
 
 	return layout.Dimensions{Size: gtx.Constraints.Max}
